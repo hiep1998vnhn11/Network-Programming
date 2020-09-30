@@ -20,7 +20,13 @@ int getPort(char *port){ //return 0 if port invalid
     return atoi(port);
 }
 
-void splitBuff(char* buff, char* number, char* string, int *error){
+void stringNull(char* str){
+    for(int i=0; i<strlen(str);i++) str[i] = '\0';
+}
+
+int makeResponse(char buff[BUFF_SIZE]){
+    char number[BUFF_SIZE];
+    char string[BUFF_SIZE];
     int j = 0;
     int k = 0;
     for(int i = 0; i < strlen(buff); i++){
@@ -34,10 +40,23 @@ void splitBuff(char* buff, char* number, char* string, int *error){
         }
         else if(buff[i] == '\n') break;
         else {
-            *error = 1;
-            break;
+            return 0;
         }
     }
+
+    //Make Buff
+    if( j == 0 && k == 0) return 0;
+    else{ //have string and number
+        if(j != 0){
+            for(int i = 0; i < j; i++)   buff[i] = number[i];
+            buff[j] = '\n';
+        }
+        if(k != 0){
+            for(int i = 0; i < k; i++)   buff[j+i+1] = string[i];
+        }
+        buff[j+k+1] = '\0';
+    }
+    return 1;
 }
 
 int main(int argc, char *argv[])
@@ -54,7 +73,6 @@ int main(int argc, char *argv[])
     } 
     int server_sock;
     char buff[BUFF_SIZE];  //Client message
-    char number[BUFF_SIZE], string[BUFF_SIZE];
     int error = 0;
     int bytes_error, bytes_sent, bytes_received;  //Bytes count
 
@@ -88,24 +106,16 @@ int main(int argc, char *argv[])
         if(bytes_received < 0)  perror("\nError: ");
         else {
             buff[bytes_received] = '\0';
-            splitBuff(buff, number, string, &error);
             printf("Client [%s: %d] had sent an message: %s", inet_ntoa(client.sin_addr), ntohs(client.sin_port), buff);
         }
-        if(error == 1){
+        if(makeResponse(buff) == 0){
             strcpy(buff, "Error!\n");
             bytes_error = sendto(server_sock, buff, 8, 0, (struct sockaddr*)&client, sin_size);
             if(bytes_error < 0) perror("\nError: ");
             error = 0;
         } else {
-            printf("Buff: %s String: %s Number: %s\n", buff, string, number);
-            strcpy(buff, "\0");
-            strcat(buff, string);
-            strcat(buff, "\n");
-            strcat(buff, number);
             bytes_sent = sendto(server_sock, buff, strlen(buff), 0, (struct sockaddr*)&client, sin_size);
             if(bytes_sent < 0) perror("\nError: ");
-            number[0] = 0;
-            string[0] = 0;
         }
     }
     close(server_sock);

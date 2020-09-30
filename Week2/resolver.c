@@ -111,7 +111,6 @@ int main(int argc, char *argv[])
         return 1;
     }
     int check = ipOrDomain(argv[1]);
-    printf("%d", check);
     if (check == 1)
         ipToDomain(argv[1]);
     else

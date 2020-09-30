@@ -20,6 +20,26 @@ int getPort(char *port){ //return 0 if port invalid
     return atoi(port);
 }
 
+void splitBuff(char* buff, char* number, char* string, int *error){
+    int j = 0;
+    int k = 0;
+    for(int i = 0; i < strlen(buff); i++){
+        if(buff[i] >= '0' && buff[i] <= '9'){
+            number[j] = buff[i];
+            j++;
+        } 
+        else if( (buff[i] >= 'a' && buff[i] <= 'z') || (buff[i] >='A' && buff[i] <= 'Z')){
+            string[k] = buff[i];
+            k++;
+        }
+        else if(buff[i] == '\n') break;
+        else {
+            *error = 1;
+            break;
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     if(argc != 2){
@@ -34,13 +54,16 @@ int main(int argc, char *argv[])
     } 
     int server_sock;
     char buff[BUFF_SIZE];  //Client message
-    int bytes_sent, bytes_received;  //Bytes count
+    char number[BUFF_SIZE], string[BUFF_SIZE];
+    int error = 0;
+    int bytes_error, bytes_sent, bytes_received;  //Bytes count
 
     struct sockaddr_in server; //Server address info
     struct sockaddr_in client; //Client address info
     unsigned int sin_size;
 
     //Step 1: Construct a UDP Socket
+    printf("Server is running on port %d, ^C to close server anytime!\n", PORT);
     if((server_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){ //Call socket
         perror("\nError: ");
         exit(0);
@@ -65,11 +88,25 @@ int main(int argc, char *argv[])
         if(bytes_received < 0)  perror("\nError: ");
         else {
             buff[bytes_received] = '\0';
-            printf("[%s: %d]: %s", inet_ntoa(client.sin_addr), ntohs(client.sin_port), buff);
+            splitBuff(buff, number, string, &error);
+            printf("Client [%s: %d] had sent an message: %s", inet_ntoa(client.sin_addr), ntohs(client.sin_port), buff);
         }
-
-        bytes_sent = sendto(server_sock, buff, bytes_received, 0, (struct sockaddr*)&client, sin_size);
-        if(bytes_sent < 0) perror("\nError: ");
+        if(error == 1){
+            strcpy(buff, "Error!\n");
+            bytes_error = sendto(server_sock, buff, 8, 0, (struct sockaddr*)&client, sin_size);
+            if(bytes_error < 0) perror("\nError: ");
+            error = 0;
+        } else {
+            printf("Buff: %s String: %s Number: %s\n", buff, string, number);
+            strcpy(buff, "\0");
+            strcat(buff, string);
+            strcat(buff, "\n");
+            strcat(buff, number);
+            bytes_sent = sendto(server_sock, buff, strlen(buff), 0, (struct sockaddr*)&client, sin_size);
+            if(bytes_sent < 0) perror("\nError: ");
+            number[0] = 0;
+            string[0] = 0;
+        }
     }
     close(server_sock);
     return 0;

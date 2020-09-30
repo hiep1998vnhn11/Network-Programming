@@ -112,30 +112,35 @@ int main(int argc, char *argv[])
     server_addr.sin_addr.s_addr = inet_addr(argv[1]);
 
     //Step 3: Communicate with server
-    printf("\nInsert string to send:");
-    memset(buff, '\0', (strlen(buff) + 1));
-    fgets(buff, BUFF_SIZE, stdin);
 
-    sin_size = sizeof(struct sockaddr);
+    while(1){
+        printf("\nInsert string to send:");
+        memset(buff, '\0', (strlen(buff) + 1));
+        fgets(buff, BUFF_SIZE, stdin);
+        if(strcmp(buff, "\n") == 0 || strcmp(buff, "\0") == 0) break;
 
-    bytes_sent = sendto(client_sock, buff, strlen(buff), 0, (struct sockaddr *)&server_addr, sin_size);
-    if (bytes_sent < 0)
-    {
-        perror("Error: ");
-        close(client_sock);
-        return 0;
+        sin_size = sizeof(struct sockaddr);
+
+        bytes_sent = sendto(client_sock, buff, strlen(buff), 0, (struct sockaddr *)&server_addr, sin_size);
+        if (bytes_sent < 0)
+        {
+            perror("Error: ");
+            close(client_sock);
+            return 0;
+        }
+
+        bytes_received = recvfrom(client_sock, buff, BUFF_SIZE - 1, 0, (struct sockaddr *)&server_addr, &sin_size);
+        if (bytes_received < 0)
+        {
+            perror("Error: ");
+            close(client_sock);
+            return 0;
+        }
+        buff[bytes_received] = '\0';
+        printf("Reply from server:\n %s", buff);
     }
 
-    bytes_received = recvfrom(client_sock, buff, BUFF_SIZE - 1, 0, (struct sockaddr *)&server_addr, &sin_size);
-    if (bytes_received < 0)
-    {
-        perror("Error: ");
-        close(client_sock);
-        return 0;
-    }
-    buff[bytes_received] = '\0';
-    printf("Reply from server: %s", buff);
-
+    printf("Goodbye!\n");
     close(client_sock);
     return 0;
 }

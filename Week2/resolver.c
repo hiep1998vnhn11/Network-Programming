@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -10,15 +11,26 @@ int ipOrDomain(char *argv)
         return -1; // . at start or end is not a Ip
 
     int period = 0; // count Period of paramete
+    int tmp = 0;    
+
     for (int i = 0; i < strlen(argv); i++)
     {
         if (argv[i] != '.')
         {
             if (argv[i] < '0' || argv[i] > '9')
                 return -1; //paramete not a number->not a Ip
+            else 
+            {
+                tmp = (argv[i] - '0') + tmp*10;
+                if( i == strlen(argv) - 1){
+                    if(tmp > 255 || tmp < 0) return -1;
+                }
+            }
         }
         else
         {
+            if(tmp > 255 || tmp < 0) return -1;
+            tmp = 0;
             period++;
             if (period > 3)
                 return -1; //count period >=3 =>not a Ip
@@ -88,6 +100,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     int check = ipOrDomain(argv[1]);
+    printf("%d", check);
     if (check == 1)
         ipToDomain(argv[1]);
     else

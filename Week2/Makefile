@@ -12,4 +12,4 @@ main.o: resolver.c
 
 
 clean:
-	rm -f *.o *~
+	rm -f *.o *~ resolver

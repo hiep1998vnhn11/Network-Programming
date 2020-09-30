@@ -5,13 +5,26 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+int checkPeriod(char *IP)
+{ // return 1 if period = 3
+    if (IP[0] == '.' || IP[strlen(IP)-1] == '.')
+        return -1;
+    int period = 0;
+    for (int i = 0; i < strlen(IP); i++)
+    {
+        if (IP[i] == '.')
+            period++;
+    }
+    if (period == 3)
+        return 1;
+    else
+        return -1;
+}
+
 int ipOrDomain(char *argv)
 { // Ip return 1, else domain
-    if (argv[0] == '.' || argv[strlen(argv) - 1] == '.')
-        return -1; // . at start or end is not a Ip
-
-    int period = 0; // count Period of paramete
-    int tmp = 0;    
+    if(checkPeriod(argv) == -1) return -1;
+    int tmp = 0;
 
     for (int i = 0; i < strlen(argv); i++)
     {
@@ -19,27 +32,25 @@ int ipOrDomain(char *argv)
         {
             if (argv[i] < '0' || argv[i] > '9')
                 return -1; //paramete not a number->not a Ip
-            else 
+            else
             {
-                tmp = (argv[i] - '0') + tmp*10;
-                if( i == strlen(argv) - 1){
-                    if(tmp > 255 || tmp < 0) return -1;
+                tmp = (argv[i] - '0') + tmp * 10;
+                if (i == strlen(argv) - 1)
+                {
+                    if (tmp > 255 || tmp < 0)
+                        return -1;
+                    else return 1;
                 }
             }
         }
         else
         {
-            if(tmp > 255 || tmp < 0) return -1;
-            tmp = 0;
-            period++;
-            if (period > 3)
-                return -1; //count period >=3 =>not a Ip
+            if (tmp > 255 || tmp < 0)
+                return -1;
+            else tmp = 0;
         }
     }
-    if (period == 3)
-        return 1;
-    else
-        return -1;
+    return -1;
 }
 
 void ipToDomain(char *argv)
